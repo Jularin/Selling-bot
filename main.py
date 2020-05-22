@@ -1,45 +1,57 @@
 # -*- coding: utf-8 -*-
 
+import telebot
 import sqlite3
+import work_with_db
 
-def finding_in_db(finding, database, index):
-    for row in database:
-        if row[index] == finding:
-            return True
-    return False
+bot = telebot.TeleBot('1088060110:AAF-s9TPSbMAhpOXFVUPj50S0Ya8hh38jAc')
 
-for _ in range(int(input("Сколько пользователей обработать? "))):
-    id, username = input("Введите айди и юзернейм").split()
 
-    con = sqlite3.connect("users.db") #создание подключения
-    cur = con.cursor() #создание оюъекта курсор
-    users = cur.execute("SELECT * FROM users")
+@bot.message_handler(commands=['start'])
+def start(message):
+    work_with_db.check_in_db(message)
+    bot.send_message(message.chat.id, "You're using new bot! 'DESCRIPTION'\n/dump\n/balance\n")
 
-    if finding_in_db(id, users, 0): #поиск пользователя по айди
-        if finding_in_db(username, users, 1): # поиск пользователя по юзернейму
-            print("Вы уже зарегистрированы!")
-        else:
-            sql = 'UPDATE users SET username = "{}" WHERE id = "{}"'.format(username, id)
-            try:
-                cur.execute(sql)
-            except Exception as e:
-                print(e)
-            else:
-                print("Ваш юзернейм обновлёг!")
-                con.commit()
-    else:
-        sql = 'INSERT INTO users (id,username, balance, role) VALUES("{}", "{}", "0.0", "user")'.format(id, username)
 
-        try:
-            cur.execute(sql)
-        except Exception as e:
-            print(e)
-        else:
-            print("Вы успешно зарегистрировались!")
-            con.commit()
+@bot.message_handler(commands=['balance'])
+def check_balance(message):
+    work_with_db.check_in_db(message)
+    bot.send_message(message.chat.id, "Your balance: {} RUB".format(work_with_db.find_and_return_value(str(message.chat.id), 2)))
 
-    cur.execute("SELECT * FROM users") #вывод таблицы
-    print(cur.fetchall())
-    cur.close()
-    con.close()
-input()
+
+@bot.message_handler(commands=['dump'])
+def dump(message):
+    work_with_db.check_in_db(message)
+    if work_with_db.find_and_return_value(str(message.chat.id), 3) == 'admin':
+        database = work_with_db.dump()
+        result = ""
+        for tuple in database:
+                result = result + " | ".join(map(str, tuple)) + "\n"
+        bot.send_message(message.chat.id, result)
+
+
+@bot.message_handler(commands=['drop'])
+def drop_table(message):
+    work_with_db.check_in_db(message)
+    if work_with_db.find_and_return_value(str(message.chat.id), 3) == 'admin':
+        bot.send_message(message.chat.id, work_with_db.drop_table())
+
+
+@bot.message_handler(commands=['change_balance'])
+def change_balance(message):
+    bot.register_next_step_handler(bot.send_message(message.chat.id, "Укажите какой айди и на какую сумму изменить (через пробел)"), change_balance)
+
+
+def change_balance(message):
+    print(message.text)
+    id, amount = (message.text).split()
+    amount = int(amount)
+    bot.send_message(message.chat.id, work_with_db.change_balance(id, amount))
+
+
+@bot.message_handler(content_types=['text'])
+def handle_message_received(message):
+    pass
+
+
+bot.polling()

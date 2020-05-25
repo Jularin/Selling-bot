@@ -1,11 +1,11 @@
 import sqlite3
 
 
-def find_and_return_value(id, index): #searching by id and return value
+def find_and_return_value(id, index):  # searching by id and return value
     """ID index 0, USERNAME index 1, BALANCE index 2, ROLE index 3"""
-    con = sqlite3.connect("users.db") #создание подключения
-    cur = con.cursor() #создание оюъекта курсор
-    database = cur.execute("SELECT * FROM users")  #datebase dump
+    con = sqlite3.connect("users.db")  # создание подключения
+    cur = con.cursor()  # создание оюъекта курсор
+    database = cur.execute("SELECT * FROM users")  # datebase dump
     for row in database:
         if row[0] == id:
             cur.close()
@@ -24,12 +24,12 @@ def check_in_db(message):
     id = str(message.chat.id)
     username = "@" + str(message.from_user.username)
 
-    con = sqlite3.connect("users.db") #создание подключения
-    cur = con.cursor() #создание оюъекта курсор
-    users = cur.execute("SELECT * FROM users")  #datebase dump
+    con = sqlite3.connect("users.db")  # создание подключения
+    cur = con.cursor()  # создание оюъекта курсор
+    users = cur.execute("SELECT * FROM users")  # database dump
 
-    if finding_in_db(id, users, 0): #поиск пользователя по айди
-        if finding_in_db(username, users, 1): # поиск пользователя по юзернейму
+    if finding_in_db(id, users, 0):  # поиск пользователя по айди
+        if finding_in_db(username, users, 1):  # поиск пользователя по юзернейму
             print("Вы уже зарегистрированы!")
             cur.close()
             con.close()
@@ -60,8 +60,8 @@ def check_in_db(message):
 
 
 def dump():
-    con = sqlite3.connect("users.db") #создание подключения
-    cur = con.cursor() #создание оюъекта курсор
+    con = sqlite3.connect("users.db")  # создание подключения
+    cur = con.cursor()  # создание оюъекта курсор
     cur.execute("SELECT * FROM users")
     database = cur.fetchall()
     cur.close()
@@ -70,8 +70,8 @@ def dump():
 
 
 def drop_table():
-    con = sqlite3.connect("users.db") #создание подключения
-    cur = con.cursor() #создание оюъекта курсор
+    con = sqlite3.connect("users.db")  # создание подключения
+    cur = con.cursor()  # создание оюъекта курсор
     try:
         cur.execute("DELETE FROM users")
     except Exception as e:
@@ -85,8 +85,8 @@ def drop_table():
 
 def change_balance(id, amount):
     username = find_and_return_value(id, 1)
-    con = sqlite3.connect("users.db") #создание подключения
-    cur = con.cursor() #создание оюъекта курсор
+    con = sqlite3.connect("users.db")  # создание подключения
+    cur = con.cursor()  # создание оюъекта курсор
     try:
         sql = 'UPDATE users SET balance = balance + "{}" WHERE id = "{}"'.format(amount, id)
         cur.execute(sql)
@@ -95,9 +95,27 @@ def change_balance(id, amount):
         con.close()
         return "Баланс изменён теперь он у: {}  = {} RUB".format(username, find_and_return_value(id, 2))
 
-    except Exceptio as e:
+    except Exception as e:
         print(e)
         cur.close()
         con.close()
 
-#print(change_balance('124512512', -10))
+
+def add_user(id):
+    con = sqlite3.connect("users.db")  # создание подключения
+    cur = con.cursor()  # создание оюъекта курсор
+    cur.execute("INSERT INTO users VALUES ('{}', '@', 0.0, 'user')".format(id))
+    con.commit()
+    cur.close()
+    con.close()
+    return "User with id: {} added".format(id)
+
+
+def delete_user(id):
+    con = sqlite3.connect("users.db")  # создание подключения
+    cur = con.cursor()  # создание оюъекта курсор
+    cur.execute("DELETE FROM users WHERE id = '{}'".format(id))
+    con.commit()
+    cur.close()
+    con.close()
+    return "User with id: {} deleted".format(id)

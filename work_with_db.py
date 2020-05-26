@@ -11,6 +11,7 @@ def find_and_return_value(id, index):  # searching by id and return value
             cur.close()
             con.close()
             return row[index]
+    return False
 
 
 def finding_in_db(finding, database, index):
@@ -84,7 +85,6 @@ def drop_table():
 
 
 def change_balance(id, amount):
-    username = find_and_return_value(id, 1)
     con = sqlite3.connect("users.db")  # создание подключения
     cur = con.cursor()  # создание оюъекта курсор
     try:
@@ -93,7 +93,6 @@ def change_balance(id, amount):
         con.commit()
         cur.close()
         con.close()
-        return "Баланс изменён теперь он у: {}  = {} RUB".format(username, find_and_return_value(id, 2))
 
     except Exception as e:
         print(e)

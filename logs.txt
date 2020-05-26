@@ -1,0 +1,31 @@
+Username: topkekl Name: M K User id: 200757327
+Username: topkekl Name: M K User id: 200757327
+Username: topkekl Name: M K User id: 200757327 message text: /start
+Username: @topkekl Name: M K User id: 200757327 message text: /start
+2020-05-26 23:10:51.772994  Name: M K User id: 200757327 message text: /start
+26-05-2020 23:13  Name: M K User id: 200757327 message text: /start
+26-05-2020 23:15  Name: M K User id: 200757327 message text: /start
+26-05-2020 23:15  Name: M K User id: 200757327 message text: /dump
+26-05-2020 23:15  Name: M K User id: 200757327 message text: /balance
+26-05-2020 23:15  Name: M K User id: 200757327 message text: /changebalance
+26-05-2020 23:15  Name: M K User id: 200757327 message text: 12421
+26-05-2020 23:17  Name: M K User id: 200757327 message text: /changebalance
+26-05-2020 23:17  Name: M K User id: 200757327 message text: 412
+26-05-2020 23:18  Name: M K User id: 200757327 message text: /changebalance
+26-05-2020 23:18  Name: M K User id: 200757327 message text: 521
+26-05-2020 23:18  Name: M K User id: 200757327 message text: /changebalance
+26-05-2020 23:18  Name: M K User id: 200757327 message text: 51352 12
+26-05-2020 23:32  Name: M K User id: 200757327 message text: /admin
+26-05-2020 23:32  Name: M K User id: 200757327 message text: /dump нажмите сюда, чтобы получить дамп бд
+26-05-2020 23:33  Name: M K User id: 200757327 message text: /balance
+26-05-2020 23:33  Name: M K User id: 200757327 message text: /start
+26-05-2020 23:33  Name: M K User id: 200757327 message text: /balance
+26-05-2020 23:33  Name: M K User id: 200757327 message text: /balance
+26-05-2020 23:33  Name: M K User id: 200757327 message text: /start - назад
+26-05-2020 23:33  Name: M K User id: 200757327 message text: /balance нажмите сюда, чтобы узнать свой баланс
+26-05-2020 23:33  Name: M K User id: 200757327 message text: /start - назад
+26-05-2020 23:33  Name: M K User id: 200757327 message text: /help  нажмите сюда, чтобы узнать о боте
+26-05-2020 23:33  Name: M K User id: 200757327 message text: /start - назад
+26-05-2020 23:33  Name: M K User id: 200757327 message text: /buy Купить товар
+26-05-2020 23:34  Name: M K User id: 200757327 message text: /buy
+26-05-2020 23:34  Name: M K User id: 200757327 message text: /start - назад

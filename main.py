@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 
+import os
 import telebot
 import work_with_db
 from datetime import datetime
@@ -7,12 +8,8 @@ from datetime import datetime
 bot = telebot.TeleBot('1088060110:AAF-s9TPSbMAhpOXFVUPj50S0Ya8hh38jAc')
 types = telebot.types
 
-# TO DO!! make funcs: admin keyboard and users keyboard, main menu, add categories for items(2 or 3) add multiple buying
 
-
-# Finish this func
-def sure(message):
-    bot.send_message(message.chat.id, "Are you sure? y/n")
+# TO DO!! make funcs:main menu, add categories for items(2 or 3) add multiple buying
 
 
 def logging(message):
@@ -30,32 +27,75 @@ def logging(message):
         logs.write(info + '\n')
 
 
+def select_category(message):
+    pass
+
+
+@bot.callback_query_handler(func=lambda call: True)
+def query_handler(call):
+    bot.answer_callback_query(callback_query_id=call.id, text='text')  # то что выведет при нажатии на кнопку
+    if call.data == 'check_balance':
+        bot.send_message(call.message.chat.id, 'BuTTON')
+        bot.register_next_step_handler(call.message.chat.id, check_balance(call))
+
+
+def advanced_keyboard(flag):
+    markup = types.InlineKeyboardMarkup()  # create markup where put buttons
+    if flag == 'user':
+        check_balance_button = types.InlineKeyboardButton(text='Check Balance', callback_data='check_balance')
+        markup.add(check_balance_button)
+
+    return markup
+
+
+@bot.message_handler(commands=['test'])
+def test(message):
+    bot.send_message(message.chat.id, "heyyy", reply_markup=advanced_keyboard('user'))
+
+
 def keyboard(flag):
-    """Function which generate keyboard"""
+    """Function which generate keyboard."""
     keyboard = types.ReplyKeyboardMarkup(row_width=1, resize_keyboard=True)
-    buy_button = types.KeyboardButton(text='/buy Купить товар')
-    check_balance_button = types.KeyboardButton(text='/balance Баланс')
-    help_button = types.KeyboardButton(text='/help  Помощь')
-    keyboard.add(buy_button, check_balance_button, help_button)
-    if flag:
-        keyboard.add(types.KeyboardButton('/start Главное меню'))
+
+    if flag == 'user':
+        buy_button = types.KeyboardButton(text='/buy Купить товар')
+        check_balance_button = types.KeyboardButton(text='/balance Баланс')
+        help_button = types.KeyboardButton(text='/help  Помощь')
+        keyboard.add(buy_button, check_balance_button, help_button)
+        keyboard.add(types.KeyboardButton('/menu Главное меню'))
+
+    elif flag == 'admin':
+        dump_button = types.KeyboardButton(text='/dump нажмите сюда, чтобы получить дамп бд')
+        change_balance_button = types.KeyboardButton(text='/changebalance нажмите сюда, чтобы получить дамп бд')
+        add_user_button = types.KeyboardButton(text='/adduser нажмите сюда, чтобы получить дамп бд')
+        mailing_button = types.KeyboardButton(text='/mailing нажмите сюда, чтобы получить дамп бд')
+        logs_button = types.KeyboardButton(text='/logs txt файл логов')
+        clear_logs_button = types.KeyboardButton(text='/clearlogs очистка файла логов')
+        keyboard.add(dump_button, change_balance_button, add_user_button, mailing_button, logs_button, clear_logs_button)
+
     return keyboard
+
+
+@bot.message_handler(commands=['menu'])
+def main_menu(message):  # does't finished yet
+    logging(message)
 
 
 @bot.message_handler(commands=['start'])
 def start(message):
-    """Main menu"""
+    """Start function"""
     logging(message)
     work_with_db.check_in_db(message)
     bot.send_message(message.chat.id,
-                     "You're using new bot! 'DESCRIPTION'\n/dump\n/balance\n/adduser\n/changebalance\n/adduser\n/help",  # here description of bot
-                     reply_markup=keyboard(0))
+                     "You're using new bot! 'DESCRIPTION'\n/dump\n/balance\n/adduser\n/changebalance\n/adduser\n/help",
+                     # here description of bot
+                     reply_markup=keyboard('user'))
 
 
 @bot.message_handler(commands=['help'])
 def help_command(message):
     logging(message)
-    bot.send_message(message.chat.id, 'Coded by M K (@topkekl)', reply_markup=keyboard(1))
+    bot.send_message(message.chat.id, 'Coded by M K (@topkekl)', reply_markup=keyboard('user'))
 
 
 @bot.message_handler(commands=['buy'])
@@ -69,15 +109,15 @@ def buy_bot(message):
                     work_with_db.change_balance(message.chat.id, -10)
                     with open('items.txt', encoding='utf-8') as inp:
                         item = inp.readline()
-                        bot.send_message(message.chat.id, item, reply_markup=keyboard(1))
+                        bot.send_message(message.chat.id, item, reply_markup=keyboard('user'))
                         lines = inp.readlines()
                     with open('items.txt', 'w', encoding='utf-8') as out:
                         out.writelines(lines)
                 else:
-                    bot.send_message(message.chat.id, "У вас не хватает денег", reply_markup=keyboard(1))
+                    bot.send_message(message.chat.id, "У вас не хватает денег", reply_markup=keyboard('user'))
 
             else:
-                bot.send_message(message.chat.id, 'Товара нет в наличии', reply_markup=keyboard(1))
+                bot.send_message(message.chat.id, 'Товара нет в наличии', reply_markup=keyboard('user'))
                 keyboard(0)
     except Exception as e:
         print(e)
@@ -89,25 +129,35 @@ def check_balance(message):
     logging(message)
     work_with_db.check_in_db(message)
     bot.send_message(message.chat.id,
-                     "Your balance: {} RUB".format(work_with_db.find_and_return_value(str(message.chat.id), 2)), reply_markup=keyboard(1))
+                     "Your balance: {} RUB".format(work_with_db.find_and_return_value(str(message.chat.id), 2)),
+                     reply_markup=keyboard('user'))
 
 
 @bot.message_handler(commands=['admin'])
 def admin(message):
-    """Admin panel"""
+    """Access to admin panel"""
     logging(message)
     if work_with_db.find_and_return_value(str(message.chat.id), 3) == 'admin':
-        keyboard = types.ReplyKeyboardMarkup(row_width=2)
-        dump_button = types.KeyboardButton(text='/dump нажмите сюда, чтобы получить дамп бд')
-        change_balance_button = types.KeyboardButton(text='/changebalance нажмите сюда, чтобы получить дамп бд')
-        add_user_button = types.KeyboardButton(text='/adduser нажмите сюда, чтобы получить дамп бд')
-        mailing_button = types.KeyboardButton(text='/mailing нажмите сюда, чтобы получить дамп бд')
-
-        keyboard.add(dump_button, change_balance_button, add_user_button, mailing_button)
-        bot.send_message(message.chat.id, "Ok, you're admin!", reply_markup=keyboard)
-
+        bot.send_message(message.chat.id, "Ok, you're admin!", reply_markup=keyboard('admin'))
     else:
-        bot.send_message(message.chat.id, "You're not admin")
+        bot.send_message(message.chat.id, "You're not admin", reply_markup=keyboard('user'))
+
+
+@bot.message_handler(commands=['clearlogs'])
+def clear_logs(message):
+    """Function clear logs"""
+    send_logs(message)  # sending logs before clearing
+    if work_with_db.find_and_return_value(str(message.chat.id), 3) == 'admin':
+        with open('logs.txt', 'w'):  # clearing logs
+            pass
+
+
+@bot.message_handler(commands=['logs'])
+def send_logs(message):
+    logging(message)
+    if work_with_db.find_and_return_value(str(message.chat.id), 3) == 'admin':
+        with open('logs.txt', encoding='utf-8') as logs:
+            bot.send_document(message.chat.id, logs)
 
 
 @bot.message_handler(commands=['dump'])
@@ -120,19 +170,20 @@ def dump(message):
         result = ""
         for tuple in database:
             result = result + " | ".join(map(str, tuple)) + "\n"
-        bot.send_message(message.chat.id, result)
+        bot.send_message(message.chat.id, result, reply_markup=keyboard('admin'))
 
 
 def add_user(message):
     """Next step for add_user_bot function"""
     logging(message)
-    bot.send_message(message.chat.id, work_with_db.add_user(str(message.text)))
+    bot.send_message(message.chat.id, work_with_db.add_user(str(message.text)), reply_markup=keyboard('admin'))
 
 
 @bot.message_handler(commands=['adduser'])
 def add_user_bot(message):
     """Add new user by admin"""
     logging(message)
+    i = "FUCK FUCK FUCK"
     if work_with_db.find_and_return_value(str(message.chat.id), 3) == 'admin':  # if command called by admin
         bot.register_next_step_handler(bot.send_message(message.chat.id, "Укажите айди"), add_user)
 
@@ -147,12 +198,20 @@ def change_balance(message):
             amount = int(amount)
             work_with_db.change_balance(id, amount)
             bot.send_message(message.chat.id,
-                             "Баланс изменён теперь он у: {}  = {} RUB".format(work_with_db.find_and_return_value(id, 1),
-                                                                               work_with_db.find_and_return_value(id, 2)))
+                             "Баланс изменён теперь он у: {}  = {} RUB".format(
+                                 work_with_db.find_and_return_value(id, 1),
+                                 work_with_db.find_and_return_value(id, 2)),
+                             reply_markup=keyboard('admin'))
         else:
-            bot.send_message(message.chat.id, "Такого пользователя не существует")
+            bot.send_message(message.chat.id, "Такого пользователя не существует", reply_markup=keyboard('admin'))
     except Exception as e:
         print(e)
+
+
+@bot.message_handler(command=['additems'])
+def add_items(message):
+    logging(message)
+    bot.register_next_step_handler(message.chat.id, )
 
 
 @bot.message_handler(commands=['changebalance'])
@@ -172,7 +231,7 @@ def drop_table(message):
     work_with_db.check_in_db(message)
     if work_with_db.find_and_return_value(str(message.chat.id), 3) == 'admin':  # if command called by admin
         if work_with_db.find_and_return_value(str(message.chat.id), 3) == 'admin':
-            bot.send_message(message.chat.id, work_with_db.drop_table())
+            bot.send_message(message.chat.id, work_with_db.drop_table(), reply_markup=keyboard('user'))
 
 
 def mailing(message):
@@ -185,6 +244,7 @@ def mailing(message):
         except Exception as e:
             print(e)
             print(work_with_db.delete_user(tuples[0]))
+    bot.send_message(message.chat.id, "Mailing finished", reply_markup=keyboard('admin'))
 
 
 @bot.message_handler(commands=['mailing'])

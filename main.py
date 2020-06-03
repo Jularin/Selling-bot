@@ -20,65 +20,125 @@ def logging(message):
                                                                  str(message.chat.id),
                                                                  message.text)
 
-    print("Username: " + str(message.from_user.username) + ", Name: " + str(message.from_user.first_name) + " " + str(
-        message.from_user.last_name))
-    print("User id: " + str(message.chat.id))
+    print(info)
+
     with open('logs.txt', 'a', encoding='utf-8') as logs:
         logs.write(info + '\n')
 
 
-def select_category(message):
-    pass
+def call_logging(call):
+    """Logging callbacks"""
+    info = '{} User ID: {} callback: {} '.format(str(datetime.now().strftime("%d-%m-%Y %H:%M")),
+                                                 str(call.message.chat.id),
+                                                 str(call.data))
+    print(info)
+
+    with open("logs.txt", 'a', encoding='utf-8') as logs:
+        logs.write(info + '\n')
 
 
+def check_and_send_categories(call):
+    result = []
+    categories = os.listdir('items')  # list of names in folder with products
+    os.chdir('items')
+    for category in categories:
+        with open(category, 'r') as product:
+            result.append([category[:-4], str(len(product.readlines()))])
+    os.chdir('..')  # up to one level of paths
+    result1 = []
+    for values in result:
+        result1.append(" ".join(values))
+    bot.send_message(call.message.chat.id, " | ".join(result1))  # send message ex: ebay 96 | eu 84 | usa 30
+
+
+'''
 @bot.callback_query_handler(func=lambda call: True)
-def query_handler(call):
-    bot.answer_callback_query(callback_query_id=call.id, text='text')  # то что выведет при нажатии на кнопку
-    if call.data == 'check_balance':
-        bot.send_message(call.message.chat.id, 'BuTTON')
-        bot.register_next_step_handler(call.message.chat.id, check_balance(call))
+def category_query_handler(call):
+    array = select_category()
+    for callback in array:
+        if call.data == callback+'_buy':
+            buy_bot(callback+'.txt')
+        elif call.data == callback+'_add':
+            bot.register_next_step_handler(bot.send_message(call.message.chat.id, "Send me txt file to add"), add_items)
 
 
-def advanced_keyboard(flag):
-    markup = types.InlineKeyboardMarkup()  # create markup where put buttons
-    if flag == 'user':
-        check_balance_button = types.InlineKeyboardButton(text='Check Balance', callback_data='check_balance')
-        markup.add(check_balance_button)
+def make_keyboard_from_list(array):
+    markup = types.InlineKeyboardMarkup()
+    for button in array:
+        markup.add(types.InlineKeyboardButton(text=str(button), callback_data=str(button)+'_buy'))
 
     return markup
 
 
-@bot.message_handler(commands=['test'])
-def test(message):
-    bot.send_message(message.chat.id, "heyyy", reply_markup=advanced_keyboard('user'))
+def select_category():
+    result = []
+    categories = os.listdir('items')
+    for category in categories:
+        result.append(category[:-4])
+
+    return result
+'''
 
 
-def keyboard(flag):
-    """Function which generate keyboard."""
-    keyboard = types.ReplyKeyboardMarkup(row_width=1, resize_keyboard=True)
+@bot.callback_query_handler(func=lambda call: True)
+def query_handler(call):
+    bot.answer_callback_query(callback_query_id=call.id,
+                              text='You clicked to button!')  # то что выведет при нажатии на кнопку
+    call_logging(call)
+    if call.data == 'check_balance':
+        check_balance(call)
+    elif call.data == 'add_user':
+        add_user_bot(call)
+    elif call.data == 'dump':
+        dump(call)
+    elif call.data == 'mailing':
+        mailing_bot(call)
+    elif call.data == 'change_balance':
+        change_balance_bot(call)
+    elif call.data == 'send_logs':
+        send_logs(call)
+    elif call.data == 'clear_logs':
+        clear_logs(call)
+    elif call.data == 'buy':
+        buy_bot(call)
+    elif call.data == 'help':
+        help_command(call)
+    elif call.data == 'menu':
+        main_menu(call)
+    elif call.data == 'categories':
+        check_and_send_categories(call)
+    elif call.data == 'add_items':
+        add_items(call)
+
+
+def advanced_keyboard(flag):
+    markup = types.InlineKeyboardMarkup()  # create markup where put buttons
 
     if flag == 'user':
-        buy_button = types.KeyboardButton(text='/buy Купить товар')
-        check_balance_button = types.KeyboardButton(text='/balance Баланс')
-        help_button = types.KeyboardButton(text='/help  Помощь')
-        keyboard.add(buy_button, check_balance_button, help_button)
-        keyboard.add(types.KeyboardButton('/menu Главное меню'))
+        check_balance_button = types.InlineKeyboardButton(text='Check Balance', callback_data='check_balance')
+        buy_button = types.InlineKeyboardButton(text='Buy', callback_data='buy')
+        help_button = types.InlineKeyboardButton(text="Help", callback_data='help')
+        menu_button = types.InlineKeyboardButton(text="Menu", callback_data='menu')
+        check_categories_button = types.InlineKeyboardButton(text="Categories and counts", callback_data='categories')
+        markup.add(check_balance_button, buy_button, help_button, menu_button, check_categories_button)
 
-    elif flag == 'admin':
-        dump_button = types.KeyboardButton(text='/dump нажмите сюда, чтобы получить дамп бд')
-        change_balance_button = types.KeyboardButton(text='/changebalance нажмите сюда, чтобы получить дамп бд')
-        add_user_button = types.KeyboardButton(text='/adduser нажмите сюда, чтобы получить дамп бд')
-        mailing_button = types.KeyboardButton(text='/mailing нажмите сюда, чтобы получить дамп бд')
-        logs_button = types.KeyboardButton(text='/logs txt файл логов')
-        clear_logs_button = types.KeyboardButton(text='/clearlogs очистка файла логов')
-        keyboard.add(dump_button, change_balance_button, add_user_button, mailing_button, logs_button, clear_logs_button)
+    if flag == 'admin':
+        add_user_button = types.InlineKeyboardButton(text="Add user", callback_data='add_user')
+        dump_button = types.InlineKeyboardButton(text='Dump Database', callback_data='dump')
+        mailing_button = types.InlineKeyboardButton(text='Mailing', callback_data='mailing')
+        change_balance_button = types.InlineKeyboardButton(text='Change balance', callback_data='change_balance')
+        logs_button = types.InlineKeyboardButton(text='Send logs', callback_data='send_logs')
+        clear_logs_button = types.InlineKeyboardButton(text='Clear logs', callback_data='clear_logs')
+        add_items_button = types.InlineKeyboardButton(text='Add items', callback_data='add_items')
+        markup.add(add_user_button, dump_button, mailing_button, change_balance_button, logs_button, clear_logs_button, add_items_button)
 
-    return keyboard
+    return markup
 
 
-@bot.message_handler(commands=['menu'])
-def main_menu(message):  # does't finished yet
-    logging(message)
+def main_menu(call):  # does't finished yet
+    bot.send_message(call.message.chat.id,
+                     "You're using new bot! 'DESCRIPTION'",
+                     reply_markup=advanced_keyboard('user'))  # here description of bot
 
 
 @bot.message_handler(commands=['start'])
@@ -87,50 +147,45 @@ def start(message):
     logging(message)
     work_with_db.check_in_db(message)
     bot.send_message(message.chat.id,
-                     "You're using new bot! 'DESCRIPTION'\n/dump\n/balance\n/adduser\n/changebalance\n/adduser\n/help",
+                     "You're using new bot! 'DESCRIPTION'",
                      # here description of bot
-                     reply_markup=keyboard('user'))
+                     reply_markup=advanced_keyboard('user'))
 
 
-@bot.message_handler(commands=['help'])
-def help_command(message):
-    logging(message)
-    bot.send_message(message.chat.id, 'Coded by M K (@topkekl)', reply_markup=keyboard('user'))
+def help_command(call):
+    bot.send_message(call.message.chat.id, 'Coded by M K (@topkekl)')
 
 
-@bot.message_handler(commands=['buy'])
-def buy_bot(message):
+def buying(call, category, count):
+    pass
+
+
+def buy_bot(call):
     """Buying items"""
-    logging(message)
     try:
         with open('items.txt', encoding='utf-8') as items:
             if len(items.readlines()) > 0:
-                if float(work_with_db.find_and_return_value(str(message.chat.id), 2)) >= 10:
-                    work_with_db.change_balance(message.chat.id, -10)
+                if float(work_with_db.find_and_return_value(str(call.message.chat.id), 2)) >= 10:
+                    work_with_db.change_balance(call.message.chat.id, -10)
                     with open('items.txt', encoding='utf-8') as inp:
                         item = inp.readline()
-                        bot.send_message(message.chat.id, item, reply_markup=keyboard('user'))
+                        bot.send_message(call.message.chat.id, item)
                         lines = inp.readlines()
                     with open('items.txt', 'w', encoding='utf-8') as out:
                         out.writelines(lines)
                 else:
-                    bot.send_message(message.chat.id, "У вас не хватает денег", reply_markup=keyboard('user'))
+                    bot.send_message(call.message.chat.id, "У вас не хватает денег")
 
             else:
-                bot.send_message(message.chat.id, 'Товара нет в наличии', reply_markup=keyboard('user'))
-                keyboard(0)
+                bot.send_message(call.message.chat.id, 'Товара нет в наличии')
     except Exception as e:
         print(e)
 
 
-@bot.message_handler(commands=['balance'])
-def check_balance(message):
+def check_balance(call):
     """Send balance to user"""
-    logging(message)
-    work_with_db.check_in_db(message)
-    bot.send_message(message.chat.id,
-                     "Your balance: {} RUB".format(work_with_db.find_and_return_value(str(message.chat.id), 2)),
-                     reply_markup=keyboard('user'))
+    bot.send_message(call.message.chat.id,
+                     "Your balance: {} RUB".format(work_with_db.find_and_return_value(str(call.message.chat.id), 2)))
 
 
 @bot.message_handler(commands=['admin'])
@@ -138,54 +193,47 @@ def admin(message):
     """Access to admin panel"""
     logging(message)
     if work_with_db.find_and_return_value(str(message.chat.id), 3) == 'admin':
-        bot.send_message(message.chat.id, "Ok, you're admin!", reply_markup=keyboard('admin'))
+        bot.send_message(message.chat.id, "Ok, you're admin!", reply_markup=advanced_keyboard('admin'))
     else:
-        bot.send_message(message.chat.id, "You're not admin", reply_markup=keyboard('user'))
+        bot.send_message(message.chat.id, "You're not admin")
 
 
-@bot.message_handler(commands=['clearlogs'])
-def clear_logs(message):
+def clear_logs(call):
     """Function clear logs"""
-    send_logs(message)  # sending logs before clearing
-    if work_with_db.find_and_return_value(str(message.chat.id), 3) == 'admin':
+    send_logs(call)  # sending logs before clearing
+    if work_with_db.find_and_return_value(str(call.message.chat.id), 3) == 'admin':
         with open('logs.txt', 'w'):  # clearing logs
             pass
 
 
-@bot.message_handler(commands=['logs'])
-def send_logs(message):
-    logging(message)
-    if work_with_db.find_and_return_value(str(message.chat.id), 3) == 'admin':
+def send_logs(call):
+    if work_with_db.find_and_return_value(str(call.message.chat.id), 3) == 'admin':
         with open('logs.txt', encoding='utf-8') as logs:
-            bot.send_document(message.chat.id, logs)
+            bot.send_document(call.message.chat.id, logs)
 
 
-@bot.message_handler(commands=['dump'])
-def dump(message):
+def dump(call):
     """Send dump of db for admin"""
-    logging(message)
-    work_with_db.check_in_db(message)
-    if work_with_db.find_and_return_value(str(message.chat.id), 3) == 'admin':  # if command called by admin
+    # work_with_db.check_in_db(message)
+    if work_with_db.find_and_return_value(str(call.message.chat.id), 3) == 'admin':  # if command called by admin
         database = work_with_db.dump()
         result = ""
-        for tuple in database:
-            result = result + " | ".join(map(str, tuple)) + "\n"
-        bot.send_message(message.chat.id, result, reply_markup=keyboard('admin'))
+        for row in database:
+            result = result + " | ".join(map(str, row)) + "\n"
+        bot.edit_message_text(chat_id=call.message.chat.id, message_id=call.message.message_id, text='KEKW', reply_markup=advanced_keyboard('admin'))
+        bot.send_message(call.message.chat.id, result)
 
 
 def add_user(message):
     """Next step for add_user_bot function"""
     logging(message)
-    bot.send_message(message.chat.id, work_with_db.add_user(str(message.text)), reply_markup=keyboard('admin'))
+    bot.send_message(message.chat.id, work_with_db.add_user(str(message.text)))
 
 
-@bot.message_handler(commands=['adduser'])
-def add_user_bot(message):
+def add_user_bot(call):
     """Add new user by admin"""
-    logging(message)
-    i = "FUCK FUCK FUCK"
-    if work_with_db.find_and_return_value(str(message.chat.id), 3) == 'admin':  # if command called by admin
-        bot.register_next_step_handler(bot.send_message(message.chat.id, "Укажите айди"), add_user)
+    if work_with_db.find_and_return_value(str(call.message.chat.id), 3) == 'admin':  # if command called by admin
+        bot.register_next_step_handler(bot.send_message(call.message.chat.id, "Укажите айди"), add_user)
 
 
 def change_balance(message):
@@ -193,34 +241,30 @@ def change_balance(message):
     logging(message)
     print(message.text)
     try:
-        id, amount = message.text.split()
-        if work_with_db.find_and_return_value(id, 0):
+        add_id, amount = message.text.split()
+        if work_with_db.find_and_return_value(add_id, 0):
             amount = int(amount)
-            work_with_db.change_balance(id, amount)
+            work_with_db.change_balance(add_id, amount)
             bot.send_message(message.chat.id,
                              "Баланс изменён теперь он у: {}  = {} RUB".format(
-                                 work_with_db.find_and_return_value(id, 1),
-                                 work_with_db.find_and_return_value(id, 2)),
-                             reply_markup=keyboard('admin'))
+                                 work_with_db.find_and_return_value(add_id, 1),
+                                 work_with_db.find_and_return_value(add_id, 2)),
+                             reply_markup=advanced_keyboard('admin'))
         else:
-            bot.send_message(message.chat.id, "Такого пользователя не существует", reply_markup=keyboard('admin'))
+            bot.send_message(message.chat.id, "Такого пользователя не существует")
     except Exception as e:
         print(e)
 
 
-@bot.message_handler(command=['additems'])
-def add_items(message):
-    logging(message)
-    bot.register_next_step_handler(message.chat.id, )
+def add_items(call):
+    bot.send_message(call.message.chat.id, "OK I'm here")
 
 
-@bot.message_handler(commands=['changebalance'])
-def change_balance_bot(message):
+def change_balance_bot(call):
     """Check who want change balance and get id and amount for change"""
-    logging(message)
-    if work_with_db.find_and_return_value(str(message.chat.id), 3) == 'admin':  # if command called by admin
+    if work_with_db.find_and_return_value(str(call.message.chat.id), 3) == 'admin':  # if command called by admin
         bot.register_next_step_handler(
-            bot.send_message(message.chat.id, "Укажите какой айди и на какую сумму изменить (через пробел)"),
+            bot.send_message(call.message.chat.id, "Укажите какой айди и на какую сумму изменить (через пробел)"),
             change_balance)
 
 
@@ -231,7 +275,7 @@ def drop_table(message):
     work_with_db.check_in_db(message)
     if work_with_db.find_and_return_value(str(message.chat.id), 3) == 'admin':  # if command called by admin
         if work_with_db.find_and_return_value(str(message.chat.id), 3) == 'admin':
-            bot.send_message(message.chat.id, work_with_db.drop_table(), reply_markup=keyboard('user'))
+            bot.send_message(message.chat.id, work_with_db.drop_table(), reply_markup=advanced_keyboard('user'))
 
 
 def mailing(message):
@@ -244,15 +288,14 @@ def mailing(message):
         except Exception as e:
             print(e)
             print(work_with_db.delete_user(tuples[0]))
-    bot.send_message(message.chat.id, "Mailing finished", reply_markup=keyboard('admin'))
+    bot.send_message(message.chat.id, "Mailing finished")
 
 
-@bot.message_handler(commands=['mailing'])
-def mailing_bot(message):
+def mailing_bot(call):
     """Function get mailing text"""
-    logging(message)
-    if work_with_db.find_and_return_value(str(message.chat.id), 3) == 'admin':  # if command called by admin
-        bot.register_next_step_handler(bot.send_message(message.chat.id, "Send me text to mailing"), mailing)
+
+    if work_with_db.find_and_return_value(str(call.message.chat.id), 3) == 'admin':  # if command called by admin
+        bot.register_next_step_handler(bot.send_message(call.message.chat.id, "Send me text to mailing"), mailing)
 
 
 # ADD NEW COMMANDS ONLY ABOVE THIS FUNC. New commands don't read bc all will be 'content_types = text'

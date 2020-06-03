@@ -49,36 +49,7 @@ def check_and_send_categories(call):
     for values in result:
         result1.append(" ".join(values))
     bot.send_message(call.message.chat.id, " | ".join(result1))  # send message ex: ebay 96 | eu 84 | usa 30
-
-
-'''
-@bot.callback_query_handler(func=lambda call: True)
-def category_query_handler(call):
-    array = select_category()
-    for callback in array:
-        if call.data == callback+'_buy':
-            buy_bot(callback+'.txt')
-        elif call.data == callback+'_add':
-            bot.register_next_step_handler(bot.send_message(call.message.chat.id, "Send me txt file to add"), add_items)
-
-
-def make_keyboard_from_list(array):
-    markup = types.InlineKeyboardMarkup()
-    for button in array:
-        markup.add(types.InlineKeyboardButton(text=str(button), callback_data=str(button)+'_buy'))
-
-    return markup
-
-
-def select_category():
-    result = []
-    categories = os.listdir('items')
-    for category in categories:
-        result.append(category[:-4])
-
-    return result
-'''
-
+    
 
 @bot.callback_query_handler(func=lambda call: True)
 def query_handler(call):

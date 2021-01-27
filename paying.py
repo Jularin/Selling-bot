@@ -4,11 +4,11 @@ import work_with_db
 from datetime import datetime
 from dateutil import parser
 
-merchant_id = '78eb06d1ad3d3beccee0bc623a5551d5'
+merchant_id = ''
 invoice_amount = 10
 invoice_currency ='usd'
 language = 'ru'
-secret = '59f58b2e36ce94c0e48364fbf7c76039'
+secret = ''
 
 
 class Api:
